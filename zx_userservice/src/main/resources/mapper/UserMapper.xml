@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zxzy.zx_userservice.mapper.UserMapper">
+    <insert id="InsertNameAndPassword">
+        insert into user(id, email, username, password) values(#{id},#{email}, #{username},#{password});
+    </insert>
+
+    <delete id="deleteuser">
+        delete from user where id=#{id};
+    </delete>
+
+    <select id="FindUserByName" resultType="com.zxzy.zx_userservice.domain.po.User">
+    select * from user where username=#{name};
+</select>
+
+    <select id="LoginWithNameAndPassword" resultType="com.zxzy.zx_userservice.domain.po.User">
+        select * from user where username=#{name} and password =#{password};
+    </select>
+
+    <update id="AlterUserStatusUpName">
+        update user set status = "online" where username=#{username};
+    </update>
+
+    <update id="AlterUserStatusUpEmail">
+        update user set status = "online" where email=#{email};
+    </update>
+
+    <update id="Logout">
+        update user set status = "offline" where username=#{username};
+    </update>
+
+    <select id="LoginWithEmailAndPassword" resultType="com.zxzy.zx_userservice.domain.po.User">
+         select * from user where email=#{email} and password =#{password};
+    </select>
+
+
+    <select id="FindUserByEmail" resultType="com.zxzy.zx_userservice.domain.po.User">
+        select * from user where email=#{email} ;
+    </select>
+
+    <select id="getMaxId" resultType="java.lang.String">
+        select max(id) from user;
+    </select>
+
+    <select id="FindUserById" resultType="com.zxzy.zx_userservice.domain.po.User">
+        select * from user where id=#{id};
+    </select>
+
+</mapper>

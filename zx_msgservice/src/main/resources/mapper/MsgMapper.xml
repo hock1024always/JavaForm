@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.homework.zx_msgservice.mapper.MsgMapper">
+
+    <insert id="createTemplatesql">
+        INSERT INTO template (content, id, name, update_time, create_time)
+        values(#{content}, #{templateId}, #{templateName}, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE content=#{content};
+    </insert>
+
+    <!--    <update id="save" parameterType="com.homework.zx_msgservice.domain.po.Template">-->
+    <!--        UPDATE template-->
+    <!--        SET content=#{content}-->
+    <!--        WHERE id=#{id}-->
+    <!--    </update>-->
+
+    <update id="updateTemplateContent">
+        UPDATE template
+        SET content = #{content},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deletetemplate">
+        DELETE FROM template
+        where id=#{templateId}
+    </delete>
+
+    <select id="getTemplateById" resultType="String">
+        select content from template where id = #{templateId} ;
+    </select>
+
+    <select id="selectTemplateById" resultType="com.homework.zx_msgservice.domain.po.Template">
+        select * from template where id = #{templateId} ;
+    </select>
+</mapper>

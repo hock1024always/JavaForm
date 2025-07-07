@@ -1,0 +1,31 @@
+<configuration>
+
+    <!-- 控制台输出，UTF‑8，带详细格式 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <charset>UTF-8</charset>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- JSON 文件输出，只存消息体（即纯 JSON），UTF‑8 -->
+    <appender name="ENTITY_JSON_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/logs/http-logs.json</file>
+        <append>true</append>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 专用 logger 写 JSON -->
+    <logger name="MyJsonLogger" level="INFO" additivity="false">
+        <appender-ref ref="ENTITY_JSON_FILE"/>
+    </logger>
+
+    <!-- 其他日志走控制台 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>

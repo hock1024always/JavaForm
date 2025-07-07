@@ -1,0 +1,35 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: Zx_MsgService
+  datasource:
+    url: jdbc:mysql://${zxzy.mysql.host}:${zxzy.mysql.port:3306}/${zxzy.mysql.database}?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${zxzy.mysql.user}
+    password: ${zxzy.mysql.pw}
+  #新修改文件
+  mail:
+    host: smtp.163.com
+    username: 15637700031@163.com
+    password: FLubjheH7ia3yYJB
+    default-encoding: utf-8
+#新修改文件
+
+
+mybatis-plus:
+  configuration:
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      update-strategy: not_null
+      id-type: auto
+
+zxzy:
+  mysql:
+    host: 47.108.251.97
+    port: 3306
+    user: userof_services
+    pw: zx_service_homework_l2yz
+    database: zx_msg_service_db

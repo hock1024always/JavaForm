@@ -1,0 +1,31 @@
+{
+  "timestamp": 1750491328.602277600,
+  "logLevel": "INFO",
+  "logger": "http-logger",
+  "serviceName": "zx_Logservice",
+  "requestId": "2c6113b6-6767-4fa4-a5e4-b1b7555fce82",
+  "requestTime": 1750491328.464506700,
+  "clientIp": "113.54.241.187",
+  "requestMethod": "POST",
+  "requestUri": "/test/post",
+  "requestProtocol": "HTTP/1.1",
+  "requestHeaders": {
+    "content-length": "28",
+    "host": "113.54.241.187:8083",
+    "content-type": "application/json",
+    "user-agent": "curl/7.81.0",
+    "accept": "*/*"
+  },
+  "requestBody": "",
+  "requestSize": 28,
+  "responseTime": 1750491328.602277600,
+  "responseStatusCode": 200,
+  "responseLocale": "zh_CN",
+  "responseHeaders": {},
+  "responseBody": "{\"code\":1,\"msg\":null,\"data\":{\"age\":65,\"name\":\"alice\"}}",
+  "responseSize": 0,
+  "responseDuration": 138,
+  "optional": {
+    "thread_id": "http-nio-8083-exec-1"
+  }
+}

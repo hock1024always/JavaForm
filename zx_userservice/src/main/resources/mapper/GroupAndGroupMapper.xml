@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zxzy.zx_userservice.mapper.GroupAndGroupMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, parent_group_id, child_group_id, tier, institution_id, relation_name, description, status, create_by, create_time, update_by, update_time, extension
+    </sql>
+    <select id="getChild" resultType="com.zxzy.zx_userservice.domain.po.GroupAndGroup"
+            parameterType="java.lang.String">
+        select all
+        <include refid="Base_Column_List"/>
+        from group_and_group
+
+
+
+    </select>
+
+</mapper>
