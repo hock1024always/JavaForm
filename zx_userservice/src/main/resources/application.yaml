@@ -1,23 +1,55 @@
 server:
-  port: 8080
+  port: 8081
+
 spring:
   application:
-    name: Zx_UserService
+    name: zx-userservice
+  profiles:
+    active: dev
+
+  # Nacos配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+
+  # 数据源配置
   datasource:
-    url: jdbc:mysql://${zxzy.mysql.host}:${zxzy.mysql.port:3306}/${zxzy.mysql.database}?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:zx_user_service_db}?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${zxzy.mysql.user}
-    password: ${zxzy.mysql.pw}
-#新修改文件
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+
+  # Redis配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+
+  # 邮件配置
   mail:
-    host: smtp.163.com
-    username: 15637700031@163.com
-    password: FLubjheH7ia3yYJB
+    host: ${MAIL_HOST:smtp.163.com}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     default-encoding: utf-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 
-#新修改文件
-
-
+# MyBatis Plus配置
 mybatis-plus:
   configuration:
     default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
@@ -25,20 +57,32 @@ mybatis-plus:
   global-config:
     db-config:
       update-strategy: not_null
-      id-type: auto
+      id-type: assign_uuid
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET:JavaFormITOpsPlatformSecretKey2024}
+  expiration: ${JWT_EXPIRATION:86400000}
 
-redis:
-  host: localhost  # Redis 服务器地址，根据实际情况修改
-  port: 6379       # Redis 服务器端口，根据实际情况修改
-  database: 0      # Redis 数据库索引，默认为 0
-  password:        # Redis 服务器连接密码，若没有密码则留空
+# Knife4j API文档
+knife4j:
+  enable: true
+  openapi:
+    title: 用户服务API
+    description: 用户认证、权限管理、组织架构相关接口
+    version: v1.0.0
+    group:
+      default:
+        group-name: default
+        api-rule: package
+        api-rule-resources:
+          - com.zxzy.zx_userservice.controller
 
-zxzy:
-  mysql:
-    host: 47.108.251.97
-    port: 3306
-    user: userof_user_service
-    pw: zx_user_service_homework_l2yz
-    database: zx_user_service_db
-
+# 日志配置
+logging:
+  level:
+    com.zxzy: debug
+    org.springframework: info

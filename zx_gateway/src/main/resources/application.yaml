@@ -1,0 +1,86 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: zx-gateway
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # 用户服务
+        - id: zx-userservice
+          uri: lb://zx-userservice
+          predicates:
+            - Path=/api/user/**,/api/permission/**,/api/group/**
+          filters:
+            - StripPrefix=1
+
+        # 消息服务
+        - id: zx-msgservice
+          uri: lb://zx-msgservice
+          predicates:
+            - Path=/api/msg/**
+          filters:
+            - StripPrefix=1
+
+        # 日志服务
+        - id: zx-logservice
+          uri: lb://zx-logservice
+          predicates:
+            - Path=/api/log/**
+          filters:
+            - StripPrefix=1
+
+        # 业务聚合服务
+        - id: zx-topbiz
+          uri: lb://zx-topbiz
+          predicates:
+            - Path=/api/biz/**,/api/ticket/**,/api/asset/**
+          filters:
+            - StripPrefix=1
+
+      # 全局跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+# Knife4j网关聚合配置
+knife4j:
+  gateway:
+    enabled: true
+    strategy: discover
+    discover:
+      enabled: true
+      version: openapi3
+
+# 日志配置
+logging:
+  level:
+    com.zxzy: debug
+    org.springframework.cloud.gateway: debug

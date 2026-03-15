@@ -1,0 +1,271 @@
+version: '3.8'
+
+services:
+  # ============ 基础设施 ============
+  
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: javaform-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: zx_user_service_db
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - javaform-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root123456}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: javaform-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - javaform-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nacos 注册中心和配置中心
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: javaform-nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: nacos_config
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    volumes:
+      - nacos_data:/home/nacos/logs
+    networks:
+      - javaform-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ClickHouse 日志数据库
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: javaform-clickhouse
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_DB: http_log_db
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      TZ: Asia/Shanghai
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./docker/clickhouse/init:/docker-entrypoint-initdb.d
+    networks:
+      - javaform-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============ 微服务 ============
+
+  # API 网关
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: zx_gateway
+    container_name: javaform-gateway
+    restart: unless-stopped
+    environment:
+      NACOS_SERVER: nacos:8848
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "9000:9000"
+    networks:
+      - javaform-network
+    depends_on:
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 用户服务
+  userservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: zx_userservice
+    container_name: javaform-userservice
+    restart: unless-stopped
+    environment:
+      NACOS_SERVER: nacos:8848
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: zx_user_service_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8081:8081"
+    networks:
+      - javaform-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 业务聚合服务
+  topbiz:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: zx_topbiz
+    container_name: javaform-topbiz
+    restart: unless-stopped
+    environment:
+      NACOS_SERVER: nacos:8848
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: zx_top_service_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8082:8082"
+    networks:
+      - javaform-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 消息服务
+  msgservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: zx_msgservice
+    container_name: javaform-msgservice
+    restart: unless-stopped
+    environment:
+      NACOS_SERVER: nacos:8848
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: zx_msg_service_db
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8083:8083"
+    networks:
+      - javaform-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 日志服务
+  logservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: zx_logservice
+    container_name: javaform-logservice
+    restart: unless-stopped
+    environment:
+      NACOS_SERVER: nacos:8848
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: http_log_db
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8084:8084"
+    networks:
+      - javaform-network
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  javaform-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  nacos_data:
+  clickhouse_data:

@@ -1,21 +1,43 @@
 server:
-  port: 8080
+  port: 8082
+
 spring:
   application:
-    name: TopBiz
+    name: zx-topbiz
+  profiles:
+    active: dev
   main:
     allow-bean-definition-overriding: true
+
+  # Nacos配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+
+  # 数据源配置
   datasource:
-    url: jdbc:mysql://${zxzy.mysql.host}:${zxzy.mysql.port:3306}/${zxzy.mysql.database}?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:zx_top_service_db}?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${zxzy.mysql.user}
-    password: ${zxzy.mysql.pw}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+
+  # Redis配置
   data:
     redis:
-      host: 113.45.186.208
-      port: 6379
-      password: zx_service_homework_l2yz
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
 
+# MyBatis Plus配置
 mybatis-plus:
   configuration:
     default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
@@ -23,49 +45,28 @@ mybatis-plus:
   global-config:
     db-config:
       update-strategy: not_null
-#      id-type: auto
+      id-type: assign_uuid
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 
+# Knife4j API文档
+knife4j:
+  enable: true
+  openapi:
+    title: 业务聚合服务API
+    description: 工单管理、资产管理、审批流程相关接口
+    version: v1.0.0
+    group:
+      default:
+        group-name: default
+        api-rule: package
+        api-rule-resources:
+          - com.homework.topbiz.controller
 
-#seata:
-#  registry:
-#    type: file
-#  enabled: false # 是否启用 Seata
-#  application-id: ${spring.application.name} # Seata 应用 ID，通常与 Spring 应用名一致
-#  tx-service-group: default # 事务服务组名，需与 Seata Server 端配置一致
-#
-#  client:
-#    rm:
-#      mode: "AT" # 事务模式，AT 模式是默认和最常用的
-#      transaction-table-name: "undo_log" # AT 模式下业务库中的 undo_log 表名
-#    tm:
-#      commit-retry-count: 5 # TM 提交事务的重试次数
-#      rollback-retry-count: 5 # TM 回滚事务的重试次数
-#
-#  service:
-#    # 核心配置：直接指定 Seata Server 地址列表
-#    grouplist:
-#      default_tx_group: 113.45.186.208:8091 # 替换为你的 Seata Server 实际 IP 和端口
-#      # 如果有多个 Seata Server 实例组成集群，可以像这样用逗号分隔
-#      # default_tx_group: 192.168.1.100:8091,192.168.1.101:8091
-
-zxzy:
-  mysql:
-    host: 47.108.251.97
-    port: 3306
-    user: userof_services
-    pw: zx_service_homework_l2yz
-    database: zx_top_service_db
-#  service:
-#    userservice:
-#      url: http://localhost:8081
-#    msgservice:
-#      url: http://localhost:8082
-#    logservice:
-#      url: http://localhost:8083
-  service:
-    userservice:
-      url: http://1.95.148.2:8081
-    msgservice:
-      url: http://1.95.148.2:8082
-    logservice:
-      url: http://1.95.148.2:8083
+# 日志配置
+logging:
+  level:
+    com.zxzy: debug
+    com.homework: debug
+    org.springframework: info

@@ -1,22 +1,47 @@
 server:
-  port: 8081
+  port: 8083
+
 spring:
   application:
-    name: Zx_MsgService
+    name: zx-msgservice
+  profiles:
+    active: dev
+
+  # Nacos配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+
+  # 数据源配置
   datasource:
-    url: jdbc:mysql://${zxzy.mysql.host}:${zxzy.mysql.port:3306}/${zxzy.mysql.database}?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:zx_msg_service_db}?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${zxzy.mysql.user}
-    password: ${zxzy.mysql.pw}
-  #新修改文件
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+
+  # 邮件配置
   mail:
-    host: smtp.163.com
-    username: 15637700031@163.com
-    password: FLubjheH7ia3yYJB
+    host: ${MAIL_HOST:smtp.163.com}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     default-encoding: utf-8
-#新修改文件
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 
-
+# MyBatis Plus配置
 mybatis-plus:
   configuration:
     default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
@@ -24,12 +49,28 @@ mybatis-plus:
   global-config:
     db-config:
       update-strategy: not_null
-      id-type: auto
+      id-type: assign_uuid
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 
-zxzy:
-  mysql:
-    host: 47.108.251.97
-    port: 3306
-    user: userof_services
-    pw: zx_service_homework_l2yz
-    database: zx_msg_service_db
+# Knife4j API文档
+knife4j:
+  enable: true
+  openapi:
+    title: 消息服务API
+    description: 邮件发送、模板管理、定时任务相关接口
+    version: v1.0.0
+    group:
+      default:
+        group-name: default
+        api-rule: package
+        api-rule-resources:
+          - com.homework.zx_msgservice.controller
+
+# 日志配置
+logging:
+  level:
+    com.zxzy: debug
+    com.homework: debug
+    org.springframework: info
